@@ -65,5 +65,30 @@ class MultiHead(nn.Module):
         o = torch.cat(o,-1)
         o = self.linear(o)
         return o
+
+class TransformerEncoderLayer(nn.Module):
+    def __init__(self, hidden_dim, head_num,d_ff=2048):
+        super(TransformerEncoderLayer, self).__init__()
+        self.multihead_att =MultiHead(hidden_dim, head_num)
+        self.norm1 = nn.LayerNorm(hidden_dim)
+        self.fc =nn.Sequential(
+            nn.Linear(hidden_dim,d_ff),
+            nn.ReLU(),
+            nn.Linear(d_ff,hidden_dim)
+        )
+        self.norm2 = nn.LayerNorm(hidden_dim)
+    
+    def forward(self,x,mask=None):
+        #residual connection
+        att = self.multihead_att(x,mask=mask)
+        att = self.norm1(x + att) 
+        att = self.fc(att)
+        att = self.norm2(att + x)
+        return att
+
+class TransformerEncoder(nn.Module):
+    def __init__(self, hidden_dim, head_num, layer_num,d_ff=2048,max_steps=None,use_clf_token=False):
+        super(TransformerEncoder, self).__init__()
+        
         
 
